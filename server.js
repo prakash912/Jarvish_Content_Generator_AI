@@ -1,7 +1,17 @@
 import { Telegraf } from "telegraf";
 import userModel from "./src/models/User.js";
+import connectDb from "./src/config/db.js";
+import { message } from "telegraf/filters";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
+
+try {
+  connectDb();
+  console.log("Database Connected Successfully");
+} catch (err) {
+  console.log(err);
+  process.kill(process.pid, "SIGTERM");
+}
 
 bot.start(async (ctx) => {
   console.log(ctx.update.message.from, "ctx");
@@ -28,6 +38,10 @@ bot.start(async (ctx) => {
     console.log(err, "err");
     await ctx.reply("Facing Difficulties");
   }
+});
+
+bot.on(message("text"), async (ctx) => {
+  ctx.reply("Got the Message");
 });
 
 bot.launch();
