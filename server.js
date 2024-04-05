@@ -1,10 +1,15 @@
 import { Telegraf } from "telegraf";
+import OpenAI from "openai";
 import userModel from "./src/models/User.js";
 import eventModel from "./src/models/Event.js";
 import connectDb from "./src/config/db.js";
 import { message } from "telegraf/filters";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
+
+const openai = new OpenAI({
+  apiKey: process.env["OPENAI_KEY"],
+});
 
 try {
   connectDb();
@@ -63,10 +68,30 @@ bot.command("generate", async (ctx) => {
   }
 
   // make open api call
+
+  try {
+    const chatComplition = await openai.chat.completions.create({
+      message: [
+        {
+          role: "system",
+          content: `Act as a senior copywriter, you write highly engaging post for linkdin,fasebook and twitter using provided thoughts/events throught the day`,
+        },
+        {
+          role: "user",
+          content: `Write like a human, for humans. Craft three engaging social media posts tailored for Linkdin, Facebook, and Twitter audiances.Use simple language.Use given time labels just to understand the order of event, don't mention the time in the posts.Each post should creatively highlight the following events. Ensure the ton is conversational and impactful. Focus on engaging the respective platform's audiance, encouraging interaction , and driving intrest in the events: ${events
+            .map((event) => event.text)
+            .join(", ")}`,
+        },
+      ],
+      model: process.env.OPENAI_MODEL,
+    });
+    console.log(chatComplition);
+    await ctx.reply("Doing Things...");
+  } catch (err) {
+    console.log("Fasing error", err);
+  }
   // store token count
   // send response
-
-  await ctx.reply("Doing Things...");
 });
 
 bot.on(message("text"), async (ctx) => {
